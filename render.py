@@ -12,43 +12,45 @@ class DrawXorO():
 
     def draw_o(self, x, y, radius=25):
         pg.draw.circle(self.screen, (0, 255, 0), (x + radius, y + radius), radius, 5)
-class Logic():
-    def __init__(self, colums=3, rows=3):
-        self.colums = colums
+class Logic:
+    def __init__(self, rows=3, colums=3):
         self.rows = rows
-        self.board = {}  # Initialize the board with empty rows
-        for row in range(rows):
-            if not self.board.get("rowsX"):
-                self.board["rowsX"] = []
-            if not self.board.get("rowsO"):
-                self.board["rowsO"] = []
-            self.board["rowsX"].append(int("0") * rows)  # Each row is a list of 0 values
-            self.board["rowsO"].append(int("0") * rows)  # Each row is a list of 0 values
-        for col in range(colums):
-            if not self.board.get("columsX"):
-                self.board["columsX"] = []
-            if not self.board.get("columsO"):
-                self.board["columsO"] = []
-            self.board["columsX"].append(int("0") * colums)  # Each colum is a list of 0 values
-            self.board["columsO"].append(int("0") * colums)  # Each colum is a list of 0 values
-           
+        self.colums = colums
+        # Vytvoří 2D mřížku plnou nul: [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+        self.board = [[0 for _ in range(colums)] for _ in range(rows)]
         print(f"Initialized board: {self.board}")
 
-    def incrementTable(self, selected, row, col):
-        if selected == "X":
-            self.board["rowsX"][row] += 1
-            self.board["columsX"][col] += 1
-        elif selected == "O":
-            self.board["rowsO"][row] -= 1
-            self.board["columsO"][col] -= 1
-        print(f"Updated board: {self.board}")
-    def check_winner(self):
-        for key in self.board.keys():
-            for value in self.board[key]:
-                if value == 1:
-                    return "X"
-                elif value == -1:
-                    return "O"
+    def make_move(self, row, col, player):
+        """Zaznamená tah hráče ('X' nebo 'O') na danou pozici."""
+        if self.board[row][col] == 0:
+            self.board[row][col] = player
+            return True
+        return False
+
+    def check_winner(self, clicked_cells=[]):
+        # 1. Kontrola remízy
+        if len(clicked_cells) >= self.rows * self.colums:
+            return "draw"
+
+        # 2. Kontrola řádků
+        for row in self.board:
+            if row[0] == row[1] == row[2] and row[0] != 0:
+                return row[0]
+
+        # 3. Kontrola sloupců
+        for col in range(self.colums):
+            if self.board[0][col] == self.board[1][col] == self.board[2][col] and self.board[0][col] != 0:
+                return self.board[0][col]
+
+        # 4. Kontrola hlavní diagonály (levý horní -> pravý dolní)
+        if self.board[0][0] == self.board[1][1] == self.board[2][2] and self.board[0][0] != 0:
+            return self.board[0][0]
+
+        # 5. Kontrola vedlejší diagonály (pravý horní -> levý dolní)
+        if self.board[0][2] == self.board[1][1] == self.board[2][0] and self.board[0][2] != 0:
+            return self.board[0][2]
+
+        return None
 # Renders everything on the screen
 class Render:
     def __init__(self, bg=(0,0,0), caption="Tic-tac-toe", screen_w = 900, screen_h = 400):
@@ -66,7 +68,7 @@ class Render:
         for row in range(rows):
             for col in range(cols):
                 if row >= rows:
-                    rect = pg.Rect(col * cell_width, row * cell_height, cell_width, cell_height - 50)
+                    rect = pg.Rect(col * cell_width, row * cell_height, cell_width, cell_height - 100)
                 else:
                     rect = pg.Rect(col * cell_width, row * cell_height, cell_width, cell_height)
                 pg.draw.rect(self.screen, (255, 255, 255), rect, 1)  # Draw white grid lines
@@ -102,14 +104,19 @@ class Render:
                         if selected == "X":
                             already_drawn[(col, row)] = "X"
                             print(f"Drawing X at cell: ({col}, {row})")
-                            self.logic.incrementTable(selected, row, col)
+                            self.logic.make_move(player=selected, row=row, col=col)
                             selected = "O"
                         elif selected == "O":
                             print(f"Drawing O at cell: ({col}, {row})")
                             already_drawn[(col, row)] = "O"
-                            self.logic.incrmentTable(selected, row, col)
+                            self.logic.make_move(player=selected, row=row, col=col)
                             selected = "X"
 
+            if self.logic.check_winner(clicked_cells=clicked_cells) is not None:
+                print(f"Winner is: {self.logic.check_winner(clicked_cells=clicked_cells)}" 
+                      if self.logic.check_winner(clicked_cells=clicked_cells) is not "draw" 
+                      else "Draw")
+                self.running = False
             # Vyčištění obrazovky v každém snímku
             self.screen.fill(self.bg)
 
@@ -118,7 +125,10 @@ class Render:
 
             # Vykreslení mřížky
             self.draw_grid(rows, cols)
-            
+            if selected == "O":
+                self.XorO.draw_o(self.screen.get_width() - 100, self.screen.get_height() - 100, radius=35)
+            else:
+                self.XorO.draw_x(self.screen.get_width() - 100, self.screen.get_height() - 100, size=70)
             # Vykreslení koleček pro všechna kliknutá políčka
             for col, row in clicked_cells:
                 cell_x = col * self.cell_width
