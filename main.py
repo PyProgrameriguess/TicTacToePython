@@ -1,5 +1,8 @@
 from render import *
 
-renderClass = Render((0,0,0), "Tic-Tac-Toe")
-renderClass.start_rendering()
+screen_w = 500
+screen_h = 450
+renderClass = Render((0,0,0), "Tic-Tac-Toe", screen_w, screen_h)
+
+renderClass.start_rendering(screen_w, screen_h)
 print("Rendering initiated")
