@@ -12,7 +12,43 @@ class DrawXorO():
 
     def draw_o(self, x, y, radius=25):
         pg.draw.circle(self.screen, (0, 255, 0), (x + radius, y + radius), radius, 5)
+class Logic():
+    def __init__(self, colums=3, rows=3):
+        self.colums = colums
+        self.rows = rows
+        self.board = {}  # Initialize the board with empty rows
+        for row in range(rows):
+            if not self.board.get("rowsX"):
+                self.board["rowsX"] = []
+            if not self.board.get("rowsO"):
+                self.board["rowsO"] = []
+            self.board["rowsX"].append(int("0") * rows)  # Each row is a list of 0 values
+            self.board["rowsO"].append(int("0") * rows)  # Each row is a list of 0 values
+        for col in range(colums):
+            if not self.board.get("columsX"):
+                self.board["columsX"] = []
+            if not self.board.get("columsO"):
+                self.board["columsO"] = []
+            self.board["columsX"].append(int("0") * colums)  # Each colum is a list of 0 values
+            self.board["columsO"].append(int("0") * colums)  # Each colum is a list of 0 values
+           
+        print(f"Initialized board: {self.board}")
 
+    def incrementTable(self, selected, row, col):
+        if selected == "X":
+            self.board["rowsX"][row] += 1
+            self.board["columsX"][col] += 1
+        elif selected == "O":
+            self.board["rowsO"][row] -= 1
+            self.board["columsO"][col] -= 1
+        print(f"Updated board: {self.board}")
+    def check_winner(self):
+        for key in self.board.keys():
+            for value in self.board[key]:
+                if value == 1:
+                    return "X"
+                elif value == -1:
+                    return "O"
 # Renders everything on the screen
 class Render:
     def __init__(self, bg=(0,0,0), caption="Tic-tac-toe", screen_w = 900, screen_h = 400):
@@ -22,7 +58,7 @@ class Render:
         self.bg = bg
         self.caption = caption
         self.XorO = DrawXorO(self.screen)
-
+        self.logic = Logic()
     def draw_grid(self, rows=3, cols=3):
         cell_width = self.screen.get_width() // cols
         cell_height = self.screen.get_height() // rows
@@ -66,10 +102,12 @@ class Render:
                         if selected == "X":
                             already_drawn[(col, row)] = "X"
                             print(f"Drawing X at cell: ({col}, {row})")
+                            self.logic.incrementTable(selected, row, col)
                             selected = "O"
                         elif selected == "O":
                             print(f"Drawing O at cell: ({col}, {row})")
                             already_drawn[(col, row)] = "O"
+                            self.logic.incrmentTable(selected, row, col)
                             selected = "X"
 
             # Vyčištění obrazovky v každém snímku
