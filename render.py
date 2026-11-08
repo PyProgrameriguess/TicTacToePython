@@ -30,15 +30,18 @@ class Render:
         for row in range(rows):
             for col in range(cols):
                 if row >= rows:
-                    rect = pg.Rect(col * cell_width, row * cell_height, cell_width, cell_height - 30)
+                    rect = pg.Rect(col * cell_width, row * cell_height, cell_width, cell_height - 50)
                 else:
                     rect = pg.Rect(col * cell_width, row * cell_height, cell_width, cell_height)
                 pg.draw.rect(self.screen, (255, 255, 255), rect, 1)  # Draw white grid lines
 
     def start_rendering(self, screen_w = 900, screen_h = 400):
+        selected = "X"
+        already_drawn = {}
         rows, cols = 3, 3
-        cell_width = self.screen.get_width() // cols
-        cell_height = self.screen.get_height() // rows
+        self.cell_width = self.screen.get_width() // cols
+        self.cell_height = self.screen.get_height() // rows
+
         
         # Seznam pro uložení obsazených políček ve tvaru (col, row)
         clicked_cells = []
@@ -51,12 +54,23 @@ class Render:
                 elif event.type == pg.MOUSEBUTTONDOWN:
                     # Zjištění pozice myši a výpočet sloupce a řádku
                     x, y = event.pos
-                    col = x // cell_width
-                    row = y // cell_height
+                    col = x // self.cell_width
+                    row = y // self.cell_height
                     
                     # Pokud na tomto políčku ještě kolečko není, přidáme ho
                     if (col, row) not in clicked_cells:
+                        print(f"Clicked on cell: ({col}, {row})")
                         clicked_cells.append((col, row))
+
+                    if not (col, row) in already_drawn:
+                        if selected == "X":
+                            already_drawn[(col, row)] = "X"
+                            print(f"Drawing X at cell: ({col}, {row})")
+                            selected = "O"
+                        elif selected == "O":
+                            print(f"Drawing O at cell: ({col}, {row})")
+                            already_drawn[(col, row)] = "O"
+                            selected = "X"
 
             # Vyčištění obrazovky v každém snímku
             self.screen.fill(self.bg)
@@ -69,15 +83,19 @@ class Render:
             
             # Vykreslení koleček pro všechna kliknutá políčka
             for col, row in clicked_cells:
-                cell_x = col * cell_width
-                cell_y = row * cell_height
+                cell_x = col * self.cell_width
+                cell_y = row * self.cell_height
                 
                 # Vypočítáme střed políčka, aby byl kruh hezky uprostřed
                 radius = 35
-                center_x = cell_x + (cell_width // 2) - radius
-                center_y = cell_y + (cell_height // 2) - radius
-                
-                self.XorO.draw_o(center_x, center_y, radius=radius)
+                center_x = cell_x + (self.cell_width // 2) - radius
+                center_y = cell_y + (self.cell_height // 2) - radius
+                if (col, row) in already_drawn and already_drawn[(col, row)] == "X":
+                    self.XorO.draw_x(center_x, center_y, size=radius*2)
+                    selected = "O"  # Přepnutí na O po vykreslení X
+                elif (col, row) in already_drawn and already_drawn[(col, row)] == "O":
+                    self.XorO.draw_o(center_x, center_y, radius=radius)
+                    selected = "X"  # Přepnutí na X po vykreslení O
         
             pg.display.flip()
 
